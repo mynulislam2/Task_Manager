@@ -6,21 +6,14 @@ A React Native task management application focused on robust offline caching, cl
 
 As requested during the planning phase, here is a breakdown of key architectural choices and what is being removed from the original boilerplate:
 
-### 1. What was removed (Cleanup Phase)
-This repository originally contained a complex Finance Management app. To ensure the codebase is clean and focused solely on tasks, we are removing:
-- **Screens:** All finance screens (budget, expenses, income, recurring, analytics, profile, etc.)
-- **State Slices:** All finance-related Redux slices (`expenseSlice`, `budgetSlice`, `incomeSlice`, etc.)
-- **Navigation:** Old Stack and Tab navigators heavily tied to finance flows.
-- **Components & Dependencies:** Unused charts (e.g., Victory Native) and SMS-import logic.
-
-### 2. Why not `redux-persist`?
+### 1. Why not `redux-persist`?
 While `redux-persist` is an easy way to persist the Redux store to `AsyncStorage`, we decided to **build a custom Redux middleware** instead. 
 - **Rationale:** `redux-persist` adds a third-party dependency, acts as a "black box" serializer, and can complicate debugging. By writing a custom middleware, we have explicit, fine-grained control over exactly when our tasks are serialized to `AsyncStorage`. This ensures a robust offline cache with zero bloat.
 
-### 3. Why not SQLite (e.g., WatermelonDB or `react-native-sqlite-storage`)?
+### 2. Why not SQLite (e.g., WatermelonDB or `react-native-sqlite-storage`)?
 - **Rationale:** SQLite is fantastic for large-scale datasets (10,000+ items) requiring complex relational queries or full bidirectional sync. However, for a simple Task Manager that handles hundreds of tasks, SQLite introduces unnecessary overhead (schema setups, migrations, query layers). `AsyncStorage` paired with our custom Redux caching middleware is faster to implement, perfectly adequate for the data scale, and maintains a single source of truth (Redux). It's always easy to migrate the middleware to SQLite later if the userbase/data grows exponentially.
 
-### 4. How the Custom Cache Middleware Works
+### 3. How the Custom Cache Middleware Works
 We use a Redux Toolkit Listener (or a custom middleware) that intercepts successful actions (like fetching, adding, or editing tasks). When the task list updates, the middleware explicitly calls `AsyncStorage.setItem()` in the background. On app startup, the root component calls `AsyncStorage.getItem()` and dispatches an initialization action to populate the Redux store before triggering the background Supabase refresh.
 
 ---
