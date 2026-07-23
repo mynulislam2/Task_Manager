@@ -122,32 +122,49 @@ CREATE TABLE tasks (
 ```
 
 #### Seed Data
+
+A ready-to-run seed script is available at `supabase/seed.sql` — paste it into your Supabase SQL Editor:
+
 ```sql
-INSERT INTO categories (id, name) VALUES 
+INSERT INTO public.categories (id, name) VALUES 
 ('11111111-1111-1111-1111-111111111111', 'Work'),
 ('22222222-2222-2222-2222-222222222222', 'Personal'),
-('33333333-3333-3333-3333-333333333333', 'Errands');
+('33333333-3333-3333-3333-333333333333', 'Errands')
+ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO tasks (title, status, category_id) VALUES 
-('Finish quarterly report', 'open', '11111111-1111-1111-1111-111111111111'),
-('Buy groceries', 'done', '33333333-3333-3333-3333-333333333333'),
-('Call mom', 'open', '22222222-2222-2222-2222-222222222222'),
-('Pay electricity bill', 'open', '33333333-3333-3333-3333-333333333333'),
-('Read new tech blog', 'done', '22222222-2222-2222-2222-222222222222'),
-('Update resume', 'open', '11111111-1111-1111-1111-111111111111'),
-('Schedule dentist appointment', 'open', '22222222-2222-2222-2222-222222222222'),
-('Drop off dry cleaning', 'done', '33333333-3333-3333-3333-333333333333');
+INSERT INTO public.tasks (title, description, status, due_date, category_id) VALUES 
+('Finish quarterly report', 'Q3 financial summary for the board', 'open', '2026-08-15T10:00:00Z', '11111111-1111-1111-1111-111111111111'),
+('Buy groceries', 'Milk, eggs, bread, vegetables', 'done', '2026-07-22T10:00:00Z', '33333333-3333-3333-3333-333333333333'),
+('Call mom', 'Weekly catch-up call', 'open', NULL, '22222222-2222-2222-2222-222222222222'),
+('Pay electricity bill', 'Due by end of month', 'open', '2026-07-31T10:00:00Z', '33333333-3333-3333-3333-333333333333'),
+('Read new tech blog', 'Blog post on React Native performance', 'done', NULL, '22222222-2222-2222-2222-222222222222'),
+('Update resume', 'Add latest project experience', 'open', '2026-08-10T10:00:00Z', '11111111-1111-1111-1111-111111111111'),
+('Schedule dentist appointment', 'Annual checkup', 'open', '2026-08-05T10:00:00Z', '22222222-2222-2222-2222-222222222222'),
+('Drop off dry cleaning', 'Winter coats', 'done', '2026-07-20T10:00:00Z', '33333333-3333-3333-3333-333333333333');
 ```
+
+## Available Scripts
+
+| Script | Command | Purpose |
+|---|---|---|
+| `android` | `npx react-native run-android` | Build and launch on Android |
+| `ios` | `cd ios && pod install && cd .. && npx react-native run-ios` | Build and launch on iOS |
+| `start` | `npx react-native start` | Start Metro bundler |
+| `test` | `npx jest` | Run test suite |
+| `lint` | `npx eslint .` | Run ESLint |
+| `format` | `npx prettier --write .` | Auto-format all files |
+| `format:check` | `npx prettier --check .` | Check formatting without editing |
+| `typecheck` | `npx tsc --noEmit` | TypeScript type-check without emitting |
 
 ## Running the App
 
 ```bash
 # Android
-npx react-native run-android
+npm run android
 
 # iOS
 cd ios && pod install && cd ..
-npx react-native run-ios
+npm run ios
 ```
 
 ## Known Limitations & Future Work
