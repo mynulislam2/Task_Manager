@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build
+android/app/build/
+android/.gradle/
+ios/Pods/
+ios/build/
+web-build/
+dist/
+
+# Coverage
+coverage/
+
+# Generated
+*.jsbundle
+*.tsbuildinfo
