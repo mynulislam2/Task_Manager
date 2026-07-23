@@ -112,6 +112,8 @@ npm run android
 npm run ios
 ```
 
+> **Note:** iOS has not been tested. The iOS project is set up (fonts registered, Podfile configured) but was not run on a device or simulator.
+
 ## Available Scripts
 
 | Script | Command | Purpose |
