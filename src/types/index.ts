@@ -4,7 +4,7 @@ export interface Category {
   created_at: string;
 }
 
-export type TaskStatus = 'open' | 'done';
+export type TaskStatus = 'open' | 'in_progress' | 'in_review' | 'done';
 
 export interface Task {
   id: string;
