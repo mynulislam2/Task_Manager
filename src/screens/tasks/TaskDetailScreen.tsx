@@ -166,6 +166,9 @@ export const TaskDetailScreen = () => {
           </View>
         </View>
 
+      </ScrollView>
+
+      <View style={styles.stickyFooter}>
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
           <Text style={styles.saveBtnText}>{taskId ? 'Save Changes' : 'Create Task'}</Text>
         </TouchableOpacity>
@@ -175,7 +178,7 @@ export const TaskDetailScreen = () => {
             <Text style={styles.deleteBtnText}>Delete Task</Text>
           </TouchableOpacity>
         )}
-      </ScrollView>
+      </View>
 
       <Modal visible={showCategoryModal} transparent animationType="fade">
         <Pressable style={styles.modalOverlay} onPress={() => setShowCategoryModal(false)}>
@@ -248,7 +251,7 @@ const styles = StyleSheet.create({
   scrollContent: { padding: Spacing.lg, paddingBottom: 60 },
   starBtn: { padding: Spacing.sm, backgroundColor: Colors.card, borderRadius: BorderRadius.md, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
   
-  card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: BorderRadius.lg, marginBottom: Spacing.lg, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2 },
+  card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: BorderRadius.lg, marginBottom: Spacing.lg, borderWidth: 1, borderColor: Colors.border },
   label: { ...Typography.labelBold, color: Colors.textMuted, marginBottom: Spacing.sm, textTransform: 'uppercase' },
   input: { 
     ...Typography.body,
@@ -275,10 +278,17 @@ const styles = StyleSheet.create({
   checkboxText: { ...Typography.body, color: Colors.textMuted, marginLeft: Spacing.sm },
   checkboxTextActive: { color: Colors.primary, fontWeight: '600' },
   
-  saveBtn: { backgroundColor: Colors.primary, padding: Spacing.lg, borderRadius: BorderRadius.md, alignItems: 'center', shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },
-  saveBtnText: { ...Typography.sectionTitle, color: '#fff' },
+  stickyFooter: {
+    padding: Spacing.lg,
+    paddingTop: Spacing.md,
+    backgroundColor: Colors.background,
+    borderTopWidth: 1,
+    borderTopColor: '#F4F4F5',
+  },
+  saveBtn: { backgroundColor: Colors.primary, paddingVertical: 14, borderRadius: BorderRadius.md, alignItems: 'center', shadowColor: Colors.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 2 },
+  saveBtnText: { ...Typography.body, fontWeight: '700', color: '#fff' },
   
-  deleteBtn: { marginTop: Spacing.lg, padding: Spacing.md, alignItems: 'center' },
+  deleteBtn: { marginTop: Spacing.sm, padding: 8, alignItems: 'center' },
   deleteBtnText: { ...Typography.body, color: Colors.error, fontWeight: '600' },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },

@@ -23,3 +23,5 @@ export const getYearRange = (date: Date) => ({
 
 export const formatDate = (date: string | Date, pattern = 'MMM dd, yyyy') =>
   format(new Date(date), pattern);
+
+export * from './categoryUtils';

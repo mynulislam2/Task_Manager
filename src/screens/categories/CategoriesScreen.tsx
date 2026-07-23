@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { fetchCategoriesStart, fetchCategoriesSuccess, fetchCategoriesFailure, addCategory } from '../../store/categoriesSlice';
 import { Header } from '../../components/common/Header';
 import { Colors, Spacing, BorderRadius, Typography } from '../../constants';
+import { getCategoryStyle } from '../../utils/categoryUtils';
 
 export const CategoriesScreen = () => {
   const dispatch = useDispatch();
@@ -54,7 +55,7 @@ export const CategoriesScreen = () => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       
-      <Header title="Categories" subtitle="Manage your task spaces" showBack={false} />
+      <Header title="Categories" showBack={false} />
 
       <View style={styles.addCategoryContainer}>
         <TextInput
@@ -75,14 +76,17 @@ export const CategoriesScreen = () => {
         <FlatList
           data={items}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.categoryCard}>
-              <View style={styles.categoryIconWrap}>
-                <Icon name="folder-outline" size={20} color={Colors.primary} />
+          renderItem={({ item }) => {
+            const { icon, colors } = getCategoryStyle(item.name);
+            return (
+              <View style={styles.categoryCard}>
+                <View style={[styles.categoryIconWrap, { backgroundColor: colors.bg }]}>
+                  <Icon name={icon} size={20} color={colors.text} />
+                </View>
+                <Text style={styles.categoryName}>{item.name}</Text>
               </View>
-              <Text style={styles.categoryName}>{item.name}</Text>
-            </View>
-          )}
+            );
+          }}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
@@ -117,7 +121,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#F4F4F5',
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1
   },
-  categoryIconWrap: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.primaryLight, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md },
+  categoryIconWrap: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md },
   categoryName: { ...Typography.body, fontWeight: '600', color: Colors.textMain },
   
   emptyContainer: { alignItems: 'center', marginTop: 40 },
