@@ -160,6 +160,16 @@ state.items = fetchedTasks.map(t => ({
 
 Before overwriting the task list with backend data, we snapshot any `starred: true` entries into a map keyed by task ID. After the refresh data lands, we re-apply the flag. If a task was deleted on the backend, its `starred` value is naturally dropped (no matching ID in the fresh payload). This approach is O(n + m) — one pass over current items, one map lookup per fetched task.
 
+### 5. Why AsyncStorage (not MMKV)?
+
+MMKV is faster — 30-50x faster for reads and writes — but we chose AsyncStorage here because:
+
+- **Zero extra dependencies** — AsyncStorage ships with React Native; MMKV requires native linking, pod install, and adds ~1.5MB per architecture
+- **Async matches the use case** — cache writes happen a handful of times per session, not on a hot path. Blocking the JS thread with sync MMKV would actually be worse for occasional background persistence
+- **JSON serialization is built-in** — `JSON.stringify`/`JSON.parse` with AsyncStorage fits the Redux cache middleware pattern naturally
+
+For a task manager with hundreds of items, the speed difference is imperceptible. If the app ever grew to thousands of operations per second (real-time sync, massive datasets), swapping the middleware to use MMKV would be a straightforward change — the cache interface is abstracted behind a single middleware function.
+
 ---
 
 ## Testing Approach
