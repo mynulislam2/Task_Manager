@@ -4,7 +4,7 @@ A React Native task management application focused on robust offline caching, cl
 
 ## Architectural Decisions & Rationale
 
-As requested during the planning phase, here is a breakdown of key architectural choices and what is being removed from the original boilerplate:
+Here is a breakdown of the key architectural choices made for this project:
 
 ### 1. Why not `redux-persist`?
 While `redux-persist` is an easy way to persist the Redux store to `AsyncStorage`, we decided to **build a custom Redux middleware** instead. 
