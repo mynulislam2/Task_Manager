@@ -8,7 +8,7 @@ import { useTasks } from '../../hooks/useTasks';
 import { RootState } from '../../store';
 import { Header } from '../../components/common/Header';
 import { Colors, Spacing, BorderRadius, Typography } from '../../constants';
-
+import { TaskStatus } from '../../types';
 export const TaskDetailScreen = () => {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
@@ -21,11 +21,11 @@ export const TaskDetailScreen = () => {
   
   const [title, setTitle] = useState(task?.title || '');
   const [description, setDescription] = useState(task?.description || '');
-  const [status, setStatus] = useState<'open' | 'done'>(task?.status || 'open');
+  const [status, setStatus] = useState<TaskStatus>(task?.status || 'open');
+  const [showStatusModal, setShowStatusModal] = useState(false);
   const [dueDate, setDueDate] = useState<Date | null>(task?.due_date ? new Date(task.due_date) : null);
-  const [categoryId, setCategoryId] = useState<string | null>(task?.category_id || null);
-  
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [categoryId, setCategoryId] = useState<string | null>(task?.category_id || null);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   useEffect(() => {
@@ -68,8 +68,6 @@ export const TaskDetailScreen = () => {
     ]);
   };
 
-  const selectedCategory = categories.find(c => c.id === categoryId);
-
   return (
     <KeyboardAvoidingView 
       style={styles.container} 
@@ -79,115 +77,106 @@ export const TaskDetailScreen = () => {
       <Header 
         title={taskId ? 'Edit Task' : 'New Task'} 
         rightElement={
-          <TouchableOpacity onPress={handleSave} style={styles.headerSaveBtn} activeOpacity={0.7}>
-            <Text style={styles.headerSaveText}>Save</Text>
-          </TouchableOpacity>
-        }
-      />
-      
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        
-        {/* Title & Status Row */}
-        <View style={styles.titleRow}>
-          <TouchableOpacity 
-            style={styles.checkboxWrap} 
-            onPress={() => setStatus(status === 'open' ? 'done' : 'open')}
-            activeOpacity={0.7}
-          >
-            <Icon 
-              name={status === 'done' ? "check-circle" : "checkbox-blank-circle-outline"} 
-              size={32} 
-              color={status === 'done' ? Colors.primary : '#D4D4D8'} 
-            />
-          </TouchableOpacity>
-          
-          <TextInput
-            style={[styles.titleInput, status === 'done' && styles.titleInputDone]}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="What needs to be done?"
-            placeholderTextColor="#A1A1AA"
-            autoFocus={!taskId}
-            multiline
-          />
-
-          {taskId && (
+          taskId ? (
             <TouchableOpacity onPress={() => toggleTaskStar(taskId)} style={styles.starBtn} activeOpacity={0.7}>
               <Icon 
                 name={task?.starred ? "star" : "star-outline"} 
-                size={26} 
+                size={24} 
                 color={task?.starred ? Colors.warning : '#D4D4D8'} 
               />
             </TouchableOpacity>
-          )}
-        </View>
+          ) : undefined
+        }
+      />
+      <ScrollView contentContainerStyle={styles.scrollContent}>
 
-        <View style={styles.divider} />
+        <View style={styles.card}>
+          <Text style={styles.label}>Task Name</Text>
+          <TextInput
+            style={styles.input}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="e.g. Finish the quarterly report"
+            placeholderTextColor="#A1A1AA"
+          />
 
-        {/* Properties Section */}
-        <View style={styles.propertiesSection}>
-          
-          <TouchableOpacity style={styles.propertyRow} onPress={() => setShowCategoryModal(true)} activeOpacity={0.7}>
-            <Icon name="folder-outline" size={22} color={Colors.textMuted} style={styles.propertyIcon} />
-            <Text style={styles.propertyLabel}>Category</Text>
-            <Text style={styles.propertyValue}>{selectedCategory ? selectedCategory.name : 'None'}</Text>
-            <Icon name="chevron-right" size={20} color={Colors.border} />
-          </TouchableOpacity>
+          <Text style={styles.label}>Description</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Add details..."
+            placeholderTextColor="#A1A1AA"
+            multiline
+            textAlignVertical="top"
+          />
 
-          <TouchableOpacity style={styles.propertyRow} onPress={() => setShowDatePicker(true)} activeOpacity={0.7}>
-            <Icon name="calendar-outline" size={22} color={Colors.textMuted} style={styles.propertyIcon} />
-            <Text style={styles.propertyLabel}>Due Date</Text>
-            <Text style={styles.propertyValue}>{dueDate ? dueDate.toLocaleDateString() : 'None'}</Text>
-            {dueDate ? (
-              <TouchableOpacity onPress={() => setDueDate(null)} style={styles.clearDateBtn}>
-                <Icon name="close-circle" size={20} color={Colors.border} />
-              </TouchableOpacity>
-            ) : (
-              <Icon name="chevron-right" size={20} color={Colors.border} />
+          <View style={styles.statusSection}>
+            <Text style={styles.label}>Due Date</Text>
+            <TouchableOpacity style={styles.dateBtn} onPress={() => setShowDatePicker(true)}>
+              <View style={styles.dateBtnInner}>
+                <Icon name="calendar" size={20} color={Colors.textMuted} style={{ marginRight: Spacing.sm }} />
+                <Text style={styles.dateBtnText}>{dueDate ? dueDate.toLocaleDateString() : 'Set Due Date'}</Text>
+              </View>
+              {dueDate && (
+                 <TouchableOpacity onPress={() => setDueDate(null)} style={styles.clearDateBtn}>
+                   <Icon name="close" size={20} color={Colors.textMuted} />
+                 </TouchableOpacity>
+              )}
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={dueDate || new Date()}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(false);
+                  if (event.type === 'set' && selectedDate) {
+                    setDueDate(selectedDate);
+                  }
+                }}
+              />
             )}
-          </TouchableOpacity>
-          
+          </View>
+
+          <View style={styles.statusSection}>
+            <Text style={styles.label}>Category</Text>
+            <TouchableOpacity style={styles.dropdownBtn} onPress={() => setShowCategoryModal(true)}>
+              <View style={styles.dateBtnInner}>
+                <Icon name="folder-outline" size={20} color={Colors.textMuted} style={{ marginRight: Spacing.sm }} />
+                <Text style={styles.dateBtnText}>
+                  {categories.find(c => c.id === categoryId)?.name || 'None'}
+                </Text>
+              </View>
+              <Icon name="chevron-down" size={20} color={Colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.statusSection}>
+            <Text style={styles.label}>Status</Text>
+            <TouchableOpacity style={styles.dropdownBtn} onPress={() => setShowStatusModal(true)}>
+              <View style={styles.dateBtnInner}>
+                <Icon name="list-status" size={20} color={Colors.textMuted} style={{ marginRight: Spacing.sm }} />
+                <Text style={styles.dateBtnText}>
+                  {status === 'open' ? 'Open' : status === 'in_progress' ? 'In Progress' : status === 'in_review' ? 'In Review' : 'Completed'}
+                </Text>
+              </View>
+              <Icon name="chevron-down" size={20} color={Colors.textMuted} />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View style={styles.divider} />
+        <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
+          <Text style={styles.saveBtnText}>{taskId ? 'Save Changes' : 'Create Task'}</Text>
+        </TouchableOpacity>
 
-        {/* Description */}
-        <TextInput
-          style={styles.descriptionInput}
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Add a description..."
-          placeholderTextColor="#A1A1AA"
-          multiline
-          textAlignVertical="top"
-        />
-
-        {/* Delete Button (Only for existing tasks) */}
         {taskId && (
           <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} activeOpacity={0.7}>
-            <Icon name="trash-can-outline" size={20} color={Colors.error} style={{ marginRight: Spacing.sm }} />
             <Text style={styles.deleteBtnText}>Delete Task</Text>
           </TouchableOpacity>
         )}
-
       </ScrollView>
 
-      {/* Date Picker Modal / Overlay */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={dueDate || new Date()}
-          mode="date"
-          display="default"
-          onChange={(event, selectedDate) => {
-            setShowDatePicker(false);
-            if (event.type === 'set' && selectedDate) {
-              setDueDate(selectedDate);
-            }
-          }}
-        />
-      )}
-
-      {/* Category Picker Modal */}
       <Modal visible={showCategoryModal} transparent animationType="fade">
         <Pressable style={styles.modalOverlay} onPress={() => setShowCategoryModal(false)}>
           <View style={styles.modalContent}>
@@ -211,6 +200,40 @@ export const TaskDetailScreen = () => {
                   {categoryId === cat.id && <Icon name="check" size={20} color={Colors.primary} />}
                 </TouchableOpacity>
               ))}
+              <TouchableOpacity 
+                style={[styles.modalItem, { borderBottomWidth: 0, marginTop: Spacing.sm }]} 
+                onPress={() => { 
+                  setShowCategoryModal(false); 
+                  setTimeout(() => navigation.navigate('CategoriesTab'), 100);
+                }}
+              >
+                <Text style={[styles.modalItemText, { color: Colors.primary }]}>+ Create new category</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
+
+      <Modal visible={showStatusModal} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setShowStatusModal(false)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Status</Text>
+            <ScrollView style={styles.modalScroll}>
+              {[
+                { label: 'Open', value: 'open' },
+                { label: 'In Progress', value: 'in_progress' },
+                { label: 'In Review', value: 'in_review' },
+                { label: 'Completed', value: 'done' }
+              ].map(s => (
+                <TouchableOpacity 
+                  key={s.value} 
+                  style={styles.modalItem} 
+                  onPress={() => { setStatus(s.value as TaskStatus); setShowStatusModal(false); }}
+                >
+                  <Text style={[styles.modalItemText, status === s.value && styles.modalItemTextActive]}>{s.label}</Text>
+                  {status === s.value && <Icon name="check" size={20} color={Colors.primary} />}
+                </TouchableOpacity>
+              ))}
             </ScrollView>
           </View>
         </Pressable>
@@ -222,89 +245,47 @@ export const TaskDetailScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  scrollContent: { padding: Spacing.lg, paddingBottom: 100 },
+  scrollContent: { padding: Spacing.lg, paddingBottom: 60 },
+  starBtn: { padding: Spacing.sm, backgroundColor: Colors.card, borderRadius: BorderRadius.md, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
   
-  headerSaveBtn: { padding: Spacing.xs },
-  headerSaveText: { ...Typography.sectionTitle, color: Colors.primary },
-  
-  titleRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: Spacing.md },
-  checkboxWrap: { marginRight: Spacing.md, marginTop: 4 },
-  titleInput: { 
-    flex: 1, 
-    ...Typography.h1, 
-    color: Colors.textMain, 
-    padding: 0,
-    margin: 0,
-    minHeight: 40,
-  },
-  titleInputDone: {
-    textDecorationLine: 'line-through',
-    color: '#A1A1AA',
-  },
-  starBtn: { marginLeft: Spacing.md, marginTop: 4 },
-  
-  divider: { height: 1, backgroundColor: '#F4F4F5', marginVertical: Spacing.md },
-  
-  propertiesSection: { marginVertical: Spacing.sm },
-  propertyRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.md },
-  propertyIcon: { marginRight: Spacing.md, width: 24, textAlign: 'center' },
-  propertyLabel: { ...Typography.body, color: Colors.textMain, flex: 1 },
-  propertyValue: { ...Typography.body, color: Colors.textMuted, marginRight: Spacing.sm },
-  clearDateBtn: { padding: 2 },
-  
-  descriptionInput: {
+  card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: BorderRadius.lg, marginBottom: Spacing.lg, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2 },
+  label: { ...Typography.labelBold, color: Colors.textMuted, marginBottom: Spacing.sm, textTransform: 'uppercase' },
+  input: { 
     ...Typography.body,
-    color: Colors.textMain,
-    minHeight: 150,
-    marginTop: Spacing.sm,
-    padding: 0,
+    backgroundColor: '#F4F4F5', paddingHorizontal: Spacing.md, paddingVertical: Spacing.md, 
+    borderRadius: BorderRadius.md, marginBottom: Spacing.lg, color: Colors.textMain,
+    borderWidth: 1, borderColor: Colors.border
   },
+  textArea: { height: 120, paddingTop: Spacing.md },
   
-  deleteBtn: { 
-    flexDirection: 'row',
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    marginTop: 40, 
-    padding: Spacing.md,
-  },
+  statusSection: { marginBottom: Spacing.lg },
+  statusToggle: { flexDirection: 'row', backgroundColor: '#F4F4F5', borderRadius: BorderRadius.md, padding: Spacing.xs },
+  statusOption: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: BorderRadius.sm },
+  statusOptionActive: { backgroundColor: Colors.card, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 },
+  statusOptionText: { ...Typography.body, fontWeight: '600', color: Colors.textMuted },
+  statusOptionTextActive: { color: Colors.textMain },
+  
+  dateBtn: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#F4F4F5', paddingHorizontal: Spacing.md, paddingVertical: Spacing.md, borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.border },
+  dropdownBtn: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#F4F4F5', paddingHorizontal: Spacing.md, paddingVertical: Spacing.md, borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.border },
+  dateBtnInner: { flexDirection: 'row', alignItems: 'center' },
+  dateBtnText: { ...Typography.body, color: Colors.textMain },
+  clearDateBtn: { padding: 4 },
+  
+  checkboxBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.sm },
+  checkboxText: { ...Typography.body, color: Colors.textMuted, marginLeft: Spacing.sm },
+  checkboxTextActive: { color: Colors.primary, fontWeight: '600' },
+  
+  saveBtn: { backgroundColor: Colors.primary, padding: Spacing.lg, borderRadius: BorderRadius.md, alignItems: 'center', shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },
+  saveBtnText: { ...Typography.sectionTitle, color: '#fff' },
+  
+  deleteBtn: { marginTop: Spacing.lg, padding: Spacing.md, alignItems: 'center' },
   deleteBtnText: { ...Typography.body, color: Colors.error, fontWeight: '600' },
-  
-  // Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: Colors.card,
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-    padding: Spacing.lg,
-    maxHeight: '60%',
-  },
-  modalTitle: {
-    ...Typography.sectionTitle,
-    color: Colors.textMain,
-    marginBottom: Spacing.lg,
-    textAlign: 'center',
-  },
-  modalScroll: {
-    marginBottom: Spacing.lg,
-  },
-  modalItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F4F4F5',
-  },
-  modalItemText: {
-    ...Typography.body,
-    color: Colors.textMain,
-  },
-  modalItemTextActive: {
-    color: Colors.primary,
-    fontWeight: '600',
-  },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: Colors.card, borderTopLeftRadius: BorderRadius.xl, borderTopRightRadius: BorderRadius.xl, padding: Spacing.lg, maxHeight: '60%' },
+  modalTitle: { ...Typography.sectionTitle, color: Colors.textMain, marginBottom: Spacing.lg, textAlign: 'center' },
+  modalScroll: { marginBottom: Spacing.lg },
+  modalItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: Spacing.md, borderBottomWidth: 1, borderBottomColor: '#F4F4F5' },
+  modalItemText: { ...Typography.body, color: Colors.textMain },
+  modalItemTextActive: { color: Colors.primary, fontWeight: '600' },
 });
