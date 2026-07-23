@@ -116,27 +116,25 @@ SUPABASE_ANON_KEY=<your-anon-key>
 ### Backend Setup (Supabase)
 
 1. Go to your Supabase Dashboard > SQL Editor
-2. Run the migration file at `supabase/migrations/20260724_update_task_status.sql` — this creates the tables and seeds default categories
-3. Run the seed file at `supabase/seed.sql` to insert 8 sample tasks
-
-**Note:** The migration drops old FinTrack tables (`profiles`, `expenses`, etc.) if they exist. Skip this if you're using an existing database with those tables.
+2. Run `supabase/migrations/20260724_update_task_status.sql` (creates tables + default categories)
+3. Run `supabase/seed.sql` (inserts sample tasks)
 
 #### Schema (for reference)
 
 ```sql
-CREATE TABLE categories (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE public.categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE tasks (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE public.tasks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
   description TEXT,
   status TEXT NOT NULL CHECK (status IN ('open', 'in_progress', 'in_review', 'reopen', 'done')),
   due_date TIMESTAMP WITH TIME ZONE,
-  category_id UUID REFERENCES categories(id),
+  category_id UUID REFERENCES public.categories(id),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
