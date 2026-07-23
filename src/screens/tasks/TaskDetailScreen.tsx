@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView, Modal, Pressable } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -23,8 +23,10 @@ export const TaskDetailScreen = () => {
   const [description, setDescription] = useState(task?.description || '');
   const [status, setStatus] = useState<'open' | 'done'>(task?.status || 'open');
   const [dueDate, setDueDate] = useState<Date | null>(task?.due_date ? new Date(task.due_date) : null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [categoryId, setCategoryId] = useState<string | null>(task?.category_id || null);
+  
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   useEffect(() => {
     if (task) {
@@ -66,6 +68,8 @@ export const TaskDetailScreen = () => {
     ]);
   };
 
+  const selectedCategory = categories.find(c => c.id === categoryId);
+
   return (
     <KeyboardAvoidingView 
       style={styles.container} 
@@ -75,160 +79,232 @@ export const TaskDetailScreen = () => {
       <Header 
         title={taskId ? 'Edit Task' : 'New Task'} 
         rightElement={
-          taskId ? (
+          <TouchableOpacity onPress={handleSave} style={styles.headerSaveBtn} activeOpacity={0.7}>
+            <Text style={styles.headerSaveText}>Save</Text>
+          </TouchableOpacity>
+        }
+      />
+      
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        
+        {/* Title & Status Row */}
+        <View style={styles.titleRow}>
+          <TouchableOpacity 
+            style={styles.checkboxWrap} 
+            onPress={() => setStatus(status === 'open' ? 'done' : 'open')}
+            activeOpacity={0.7}
+          >
+            <Icon 
+              name={status === 'done' ? "check-circle" : "checkbox-blank-circle-outline"} 
+              size={32} 
+              color={status === 'done' ? Colors.primary : '#D4D4D8'} 
+            />
+          </TouchableOpacity>
+          
+          <TextInput
+            style={[styles.titleInput, status === 'done' && styles.titleInputDone]}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="What needs to be done?"
+            placeholderTextColor="#A1A1AA"
+            autoFocus={!taskId}
+            multiline
+          />
+
+          {taskId && (
             <TouchableOpacity onPress={() => toggleTaskStar(taskId)} style={styles.starBtn} activeOpacity={0.7}>
               <Icon 
                 name={task?.starred ? "star" : "star-outline"} 
-                size={24} 
+                size={26} 
                 color={task?.starred ? Colors.warning : '#D4D4D8'} 
               />
             </TouchableOpacity>
-          ) : undefined
-        }
-      />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+          )}
+        </View>
 
-        <View style={styles.card}>
-          <Text style={styles.label}>Task Name</Text>
-          <TextInput
-            style={styles.input}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="e.g. Finish the quarterly report"
-            placeholderTextColor="#A1A1AA"
-          />
+        <View style={styles.divider} />
 
-          <Text style={styles.label}>Description</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Add details..."
-            placeholderTextColor="#A1A1AA"
-            multiline
-            textAlignVertical="top"
-          />
+        {/* Properties Section */}
+        <View style={styles.propertiesSection}>
+          
+          <TouchableOpacity style={styles.propertyRow} onPress={() => setShowCategoryModal(true)} activeOpacity={0.7}>
+            <Icon name="folder-outline" size={22} color={Colors.textMuted} style={styles.propertyIcon} />
+            <Text style={styles.propertyLabel}>Category</Text>
+            <Text style={styles.propertyValue}>{selectedCategory ? selectedCategory.name : 'None'}</Text>
+            <Icon name="chevron-right" size={20} color={Colors.border} />
+          </TouchableOpacity>
 
-          <View style={styles.statusSection}>
-            <Text style={styles.label}>Due Date</Text>
-            <TouchableOpacity style={styles.dateBtn} onPress={() => setShowDatePicker(true)}>
-              <View style={styles.dateBtnInner}>
-                <Icon name="calendar" size={20} color={Colors.textMuted} style={{ marginRight: Spacing.sm }} />
-                <Text style={styles.dateBtnText}>{dueDate ? dueDate.toLocaleDateString() : 'Set Due Date'}</Text>
-              </View>
-              {dueDate && (
-                 <TouchableOpacity onPress={() => setDueDate(null)} style={styles.clearDateBtn}>
-                   <Icon name="close" size={20} color={Colors.textMuted} />
-                 </TouchableOpacity>
-              )}
-            </TouchableOpacity>
-            {showDatePicker && (
-              <DateTimePicker
-                value={dueDate || new Date()}
-                mode="date"
-                display="default"
-                onChange={(event, selectedDate) => {
-                  setShowDatePicker(false);
-                  if (event.type === 'set' && selectedDate) {
-                    setDueDate(selectedDate);
-                  }
-                }}
-              />
-            )}
-          </View>
-
-          <View style={styles.statusSection}>
-            <Text style={styles.label}>Category</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-              <TouchableOpacity 
-                style={[styles.categoryOption, categoryId === null && styles.categoryOptionActive]}
-                onPress={() => setCategoryId(null)}
-              >
-                <Text style={[styles.categoryOptionText, categoryId === null && styles.categoryOptionTextActive]}>None</Text>
+          <TouchableOpacity style={styles.propertyRow} onPress={() => setShowDatePicker(true)} activeOpacity={0.7}>
+            <Icon name="calendar-outline" size={22} color={Colors.textMuted} style={styles.propertyIcon} />
+            <Text style={styles.propertyLabel}>Due Date</Text>
+            <Text style={styles.propertyValue}>{dueDate ? dueDate.toLocaleDateString() : 'None'}</Text>
+            {dueDate ? (
+              <TouchableOpacity onPress={() => setDueDate(null)} style={styles.clearDateBtn}>
+                <Icon name="close-circle" size={20} color={Colors.border} />
               </TouchableOpacity>
+            ) : (
+              <Icon name="chevron-right" size={20} color={Colors.border} />
+            )}
+          </TouchableOpacity>
+          
+        </View>
+
+        <View style={styles.divider} />
+
+        {/* Description */}
+        <TextInput
+          style={styles.descriptionInput}
+          value={description}
+          onChangeText={setDescription}
+          placeholder="Add a description..."
+          placeholderTextColor="#A1A1AA"
+          multiline
+          textAlignVertical="top"
+        />
+
+        {/* Delete Button (Only for existing tasks) */}
+        {taskId && (
+          <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} activeOpacity={0.7}>
+            <Icon name="trash-can-outline" size={20} color={Colors.error} style={{ marginRight: Spacing.sm }} />
+            <Text style={styles.deleteBtnText}>Delete Task</Text>
+          </TouchableOpacity>
+        )}
+
+      </ScrollView>
+
+      {/* Date Picker Modal / Overlay */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={dueDate || new Date()}
+          mode="date"
+          display="default"
+          onChange={(event, selectedDate) => {
+            setShowDatePicker(false);
+            if (event.type === 'set' && selectedDate) {
+              setDueDate(selectedDate);
+            }
+          }}
+        />
+      )}
+
+      {/* Category Picker Modal */}
+      <Modal visible={showCategoryModal} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setShowCategoryModal(false)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Category</Text>
+            <ScrollView style={styles.modalScroll}>
+              <TouchableOpacity 
+                style={styles.modalItem} 
+                onPress={() => { setCategoryId(null); setShowCategoryModal(false); }}
+              >
+                <Text style={[styles.modalItemText, categoryId === null && styles.modalItemTextActive]}>None</Text>
+                {categoryId === null && <Icon name="check" size={20} color={Colors.primary} />}
+              </TouchableOpacity>
+              
               {categories.map(cat => (
                 <TouchableOpacity 
-                  key={cat.id}
-                  style={[styles.categoryOption, categoryId === cat.id && styles.categoryOptionActive]}
-                  onPress={() => setCategoryId(cat.id)}
+                  key={cat.id} 
+                  style={styles.modalItem} 
+                  onPress={() => { setCategoryId(cat.id); setShowCategoryModal(false); }}
                 >
-                  <Text style={[styles.categoryOptionText, categoryId === cat.id && styles.categoryOptionTextActive]}>{cat.name}</Text>
+                  <Text style={[styles.modalItemText, categoryId === cat.id && styles.modalItemTextActive]}>{cat.name}</Text>
+                  {categoryId === cat.id && <Icon name="check" size={20} color={Colors.primary} />}
                 </TouchableOpacity>
               ))}
             </ScrollView>
           </View>
+        </Pressable>
+      </Modal>
 
-          <View style={styles.statusSection}>
-            <Text style={styles.label}>Status</Text>
-            <View style={styles.statusToggle}>
-              <TouchableOpacity 
-                style={[styles.statusOption, status === 'open' && styles.statusOptionActive]}
-                onPress={() => setStatus('open')}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.statusOptionText, status === 'open' && styles.statusOptionTextActive]}>Open</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.statusOption, status === 'done' && styles.statusOptionActive]}
-                onPress={() => setStatus('done')}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.statusOptionText, status === 'done' && styles.statusOptionTextActive]}>Done</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
-          <Text style={styles.saveBtnText}>{taskId ? 'Save Changes' : 'Create Task'}</Text>
-        </TouchableOpacity>
-
-        {taskId && (
-          <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} activeOpacity={0.7}>
-            <Text style={styles.deleteBtnText}>Delete Task</Text>
-          </TouchableOpacity>
-        )}
-      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  scrollContent: { padding: Spacing.lg, paddingBottom: 60 },
-  starBtn: { padding: Spacing.sm, backgroundColor: Colors.card, borderRadius: BorderRadius.md, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
+  scrollContent: { padding: Spacing.lg, paddingBottom: 100 },
   
-  card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: BorderRadius.lg, marginBottom: Spacing.lg, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2 },
-  label: { ...Typography.labelBold, color: Colors.textMuted, marginBottom: Spacing.sm, textTransform: 'uppercase' },
-  input: { 
-    ...Typography.body,
-    backgroundColor: '#F4F4F5', paddingHorizontal: Spacing.md, paddingVertical: Spacing.md, 
-    borderRadius: BorderRadius.md, marginBottom: Spacing.lg, color: Colors.textMain,
-    borderWidth: 1, borderColor: Colors.border
+  headerSaveBtn: { padding: Spacing.xs },
+  headerSaveText: { ...Typography.sectionTitle, color: Colors.primary },
+  
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: Spacing.md },
+  checkboxWrap: { marginRight: Spacing.md, marginTop: 4 },
+  titleInput: { 
+    flex: 1, 
+    ...Typography.h1, 
+    color: Colors.textMain, 
+    padding: 0,
+    margin: 0,
+    minHeight: 40,
   },
-  textArea: { height: 120, paddingTop: Spacing.md },
+  titleInputDone: {
+    textDecorationLine: 'line-through',
+    color: '#A1A1AA',
+  },
+  starBtn: { marginLeft: Spacing.md, marginTop: 4 },
   
-  statusSection: { marginBottom: Spacing.lg },
-  statusToggle: { flexDirection: 'row', backgroundColor: '#F4F4F5', borderRadius: BorderRadius.md, padding: Spacing.xs },
-  statusOption: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: BorderRadius.sm },
-  statusOptionActive: { backgroundColor: Colors.card, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 },
-  statusOptionText: { ...Typography.body, fontWeight: '600', color: Colors.textMuted },
-  statusOptionTextActive: { color: Colors.textMain },
+  divider: { height: 1, backgroundColor: '#F4F4F5', marginVertical: Spacing.md },
   
-  dateBtn: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#F4F4F5', paddingHorizontal: Spacing.md, paddingVertical: Spacing.md, borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.border },
-  dateBtnInner: { flexDirection: 'row', alignItems: 'center' },
-  dateBtnText: { ...Typography.body, color: Colors.textMain },
-  clearDateBtn: { padding: 4 },
+  propertiesSection: { marginVertical: Spacing.sm },
+  propertyRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.md },
+  propertyIcon: { marginRight: Spacing.md, width: 24, textAlign: 'center' },
+  propertyLabel: { ...Typography.body, color: Colors.textMain, flex: 1 },
+  propertyValue: { ...Typography.body, color: Colors.textMuted, marginRight: Spacing.sm },
+  clearDateBtn: { padding: 2 },
   
-  categoryScroll: { flexDirection: 'row' },
-  categoryOption: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, backgroundColor: '#F4F4F5', borderRadius: BorderRadius.full, marginRight: Spacing.sm, borderWidth: 1, borderColor: Colors.border },
-  categoryOptionActive: { backgroundColor: Colors.primaryLight, borderColor: Colors.primary },
-  categoryOptionText: { ...Typography.body, color: Colors.textMuted },
-  categoryOptionTextActive: { color: Colors.primary, fontWeight: '600' },
+  descriptionInput: {
+    ...Typography.body,
+    color: Colors.textMain,
+    minHeight: 150,
+    marginTop: Spacing.sm,
+    padding: 0,
+  },
   
-  saveBtn: { backgroundColor: Colors.primary, padding: Spacing.lg, borderRadius: BorderRadius.md, alignItems: 'center', shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },
-  saveBtnText: { ...Typography.sectionTitle, color: '#fff' },
-  
-  deleteBtn: { marginTop: Spacing.lg, padding: Spacing.md, alignItems: 'center' },
+  deleteBtn: { 
+    flexDirection: 'row',
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginTop: 40, 
+    padding: Spacing.md,
+  },
   deleteBtnText: { ...Typography.body, color: Colors.error, fontWeight: '600' },
+  
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: Colors.card,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    maxHeight: '60%',
+  },
+  modalTitle: {
+    ...Typography.sectionTitle,
+    color: Colors.textMain,
+    marginBottom: Spacing.lg,
+    textAlign: 'center',
+  },
+  modalScroll: {
+    marginBottom: Spacing.lg,
+  },
+  modalItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F4F4F5',
+  },
+  modalItemText: {
+    ...Typography.body,
+    color: Colors.textMain,
+  },
+  modalItemTextActive: {
+    color: Colors.primary,
+    fontWeight: '600',
+  },
 });
