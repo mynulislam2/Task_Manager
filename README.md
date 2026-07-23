@@ -98,6 +98,8 @@ INSERT INTO public.tasks (title, description, status, due_date, category_id) VAL
 ('Drop off dry cleaning', 'Winter coats', 'done', '2026-07-20T10:00:00Z', '33333333-3333-3333-3333-333333333333');
 ```
 
+> To reset your database, run `supabase/clear_data.sql` in the SQL Editor — this deletes all tasks and categories.
+
 The app uses **Poppins** fonts — already included in the repo at `src/assets/fonts/` and linked via `react-native.config.js`. No additional setup needed.
 
 ## Running the App
