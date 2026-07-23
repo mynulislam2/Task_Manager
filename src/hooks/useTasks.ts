@@ -12,6 +12,7 @@ import {
   toggleStar,
 } from '../store/tasksSlice';
 import { LocalTask, TaskStatus } from '../types';
+import { filterAndSortTasks } from '../utils/taskUtils';
 
 export function useTasks() {
   const dispatch = useDispatch();
@@ -91,36 +92,7 @@ export function useTasks() {
 
   // Separation of rendering from filtering/sorting (Requirement 4.4)
   const filteredAndSortedTasks = useMemo(() => {
-    let result = [...items];
-    
-    // Search
-    if (searchQuery) {
-      const lowerQuery = searchQuery.toLowerCase();
-      result = result.filter(t => t.title.toLowerCase().includes(lowerQuery));
-    }
-    
-    // Filter Category
-    if (filterCategory) {
-      result = result.filter(t => t.category_id === filterCategory);
-    }
-    
-    // Filter Status
-    if (filterStatus) {
-      result = result.filter(t => t.status === filterStatus);
-    }
-    
-    // Sort
-    result.sort((a, b) => {
-      if (sortBy === 'due_date') {
-        if (!a.due_date) return 1;
-        if (!b.due_date) return -1;
-        return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
-      } else {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      }
-    });
-    
-    return result;
+    return filterAndSortTasks(items, searchQuery, filterCategory, filterStatus, sortBy);
   }, [items, searchQuery, filterCategory, filterStatus, sortBy]);
 
   return {

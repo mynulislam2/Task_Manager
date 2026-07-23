@@ -85,7 +85,7 @@ export const TaskDetailScreen = () => {
                 color={task?.starred ? Colors.warning : Colors.textMuted} 
               />
               <Text style={[styles.starBtnText, task?.starred && { color: Colors.warning }]}>
-                Priority
+                {task?.starred ? 'Starred' : 'Star'}
               </Text>
             </TouchableOpacity>
           ) : undefined

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, memo, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, RefreshControl, StatusBar, ScrollView, Modal, Pressable } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, RefreshControl, StatusBar, ScrollView, Modal, Pressable, ActivityIndicator } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -42,13 +42,6 @@ export const TaskListScreen = () => {
   const [showCategoryFilterModal, setShowCategoryFilterModal] = useState(false);
   const { items: categories } = useSelector((state: RootState) => state.categories);
 
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener(state => {
-      setIsOffline(state.isConnected === false);
-    });
-    return unsubscribe;
-  }, []);
-  
   const {
     tasks,
     loading,
@@ -62,6 +55,20 @@ export const TaskListScreen = () => {
     sortBy,
     setSortBy
   } = useTasks();
+
+  useEffect(() => {
+    let wasOffline = false;
+    const unsubscribe = NetInfo.addEventListener(state => {
+      const currentlyOffline = state.isConnected === false;
+      setIsOffline(currentlyOffline);
+      
+      if (wasOffline && !currentlyOffline) {
+        refreshTasks();
+      }
+      wasOffline = currentlyOffline;
+    });
+    return unsubscribe;
+  }, [refreshTasks]);
 
   const handleSearch = useMemo(
     () => debounce((text: string) => {
@@ -113,9 +120,17 @@ export const TaskListScreen = () => {
         </View>
         <View style={styles.subFiltersContainer}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
-            {isOffline && <Text style={styles.offlineText}>Offline</Text>}
-            {lastRefreshed && (
-              <Text style={styles.refreshText}>Synced: {new Date(lastRefreshed).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+            {loading ? (
+              <>
+                <ActivityIndicator size="small" color={Colors.primary} />
+                <Text style={[styles.refreshText, { color: Colors.primary, fontWeight: '600' }]}>Syncing...</Text>
+              </>
+            ) : isOffline ? (
+              <Text style={styles.offlineText}>Offline</Text>
+            ) : (
+              lastRefreshed && (
+                <Text style={styles.refreshText}>Synced: {new Date(lastRefreshed).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+              )
             )}
           </View>
           <TouchableOpacity style={styles.iconBtn} onPress={() => setShowSortModal(true)}>
