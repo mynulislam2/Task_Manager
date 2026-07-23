@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, memo, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, RefreshControl, StatusBar, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, RefreshControl, StatusBar, ScrollView, Modal, Pressable } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -22,7 +22,7 @@ const TaskItem = memo(({ item, onPress }: { item: LocalTask; onPress: () => void
     </View>
     <View style={styles.taskFooter}>
       <Text style={[styles.taskStatus, item.status === 'done' ? styles.statusDone : styles.statusOpen]}>
-        {item.status.toUpperCase()}
+        {item.status.replace('_', ' ').toUpperCase()}
       </Text>
       {item.due_date && (
         <Text style={styles.dateText}>
@@ -37,6 +37,9 @@ export const TaskListScreen = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation<any>();
   const [isOffline, setIsOffline] = useState(false);
+  const [showStatusFilterModal, setShowStatusFilterModal] = useState(false);
+  const [showSortModal, setShowSortModal] = useState(false);
+  const [showCategoryFilterModal, setShowCategoryFilterModal] = useState(false);
   const { items: categories } = useSelector((state: RootState) => state.categories);
 
   useEffect(() => {
@@ -93,53 +96,32 @@ export const TaskListScreen = () => {
           onChangeText={handleSearch}
         />
         <View style={styles.filters}>
-          <View style={styles.filterGroup}>
-            <TouchableOpacity 
-              style={[styles.filterBtn, filterStatus === 'open' && styles.activeBtn]}
-              onPress={() => setFilterStatus(filterStatus === 'open' ? null : 'open')}
-            >
-              <Text style={[styles.filterBtnText, filterStatus === 'open' && styles.activeBtnText]}>Open</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.filterBtn, filterStatus === 'done' && styles.activeBtn]}
-              onPress={() => setFilterStatus(filterStatus === 'done' ? null : 'done')}
-            >
-              <Text style={[styles.filterBtnText, filterStatus === 'done' && styles.activeBtnText]}>Done</Text>
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity 
-            style={styles.sortBtn}
-            onPress={() => setSortBy(sortBy === 'due_date' ? 'created_at' : 'due_date')}
-          >
-            <Text style={styles.sortBtnText}>Sort: {sortBy === 'due_date' ? 'Due' : 'Created'}</Text>
+          <TouchableOpacity style={styles.dropdownBtn} onPress={() => setShowStatusFilterModal(true)}>
+            <Icon name="filter-variant" size={16} color={Colors.textMuted} style={{ marginRight: Spacing.xs }} />
+            <Text style={styles.dropdownText} numberOfLines={1}>
+              {filterStatus ? filterStatus.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Status'}
+            </Text>
+            <Icon name="chevron-down" size={16} color={Colors.textMuted} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.dropdownBtn} onPress={() => setShowCategoryFilterModal(true)}>
+            <Icon name="tag" size={16} color={Colors.textMuted} style={{ marginRight: Spacing.xs }} />
+            <Text style={styles.dropdownText} numberOfLines={1}>
+              {filterCategory ? categories.find(c => c.id === filterCategory)?.name || 'Category' : 'Category'}
+            </Text>
+            <Icon name="chevron-down" size={16} color={Colors.textMuted} />
           </TouchableOpacity>
         </View>
-        <View style={styles.categoryFilters}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <TouchableOpacity 
-              style={[styles.catFilterBtn, filterCategory === null && styles.catFilterBtnActive]}
-              onPress={() => setFilterCategory(null)}
-            >
-              <Text style={[styles.catFilterBtnText, filterCategory === null && styles.catFilterBtnTextActive]}>All</Text>
-            </TouchableOpacity>
-            {categories.map(cat => (
-              <TouchableOpacity 
-                key={cat.id}
-                style={[styles.catFilterBtn, filterCategory === cat.id && styles.catFilterBtnActive]}
-                onPress={() => setFilterCategory(cat.id)}
-              >
-                <Text style={[styles.catFilterBtnText, filterCategory === cat.id && styles.catFilterBtnTextActive]}>{cat.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+        <View style={styles.subFiltersContainer}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+            {isOffline && <Text style={styles.offlineText}>Offline</Text>}
+            {lastRefreshed && (
+              <Text style={styles.refreshText}>Synced: {new Date(lastRefreshed).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+            )}
+          </View>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => setShowSortModal(true)}>
+            <Icon name="sort-variant" size={20} color={Colors.textMuted} />
+          </TouchableOpacity>
         </View>
-      </View>
-
-      <View style={styles.statusContainer}>
-        {isOffline && <Text style={styles.offlineText}>Offline Mode</Text>}
-        {lastRefreshed && (
-          <Text style={styles.refreshText}>Synced: {new Date(lastRefreshed).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-        )}
       </View>
 
       <FlatList
@@ -157,6 +139,89 @@ export const TaskListScreen = () => {
         ) : null}
       />
       
+      <Modal visible={showStatusFilterModal} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setShowStatusFilterModal(false)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Filter by Status</Text>
+            <ScrollView style={styles.modalScroll}>
+              <TouchableOpacity 
+                style={styles.modalItem} 
+                onPress={() => { setFilterStatus(null); setShowStatusFilterModal(false); }}
+              >
+                <Text style={[styles.modalItemText, filterStatus === null && styles.modalItemTextActive]}>All Statuses</Text>
+                {filterStatus === null && <Icon name="check" size={20} color={Colors.primary} />}
+              </TouchableOpacity>
+              {[
+                { label: 'Open', value: 'open' },
+                { label: 'In Progress', value: 'in_progress' },
+                { label: 'In Review', value: 'in_review' },
+                { label: 'Done', value: 'done' },
+              ].map(s => (
+                <TouchableOpacity 
+                  key={s.value} 
+                  style={styles.modalItem} 
+                  onPress={() => { setFilterStatus(s.value as any); setShowStatusFilterModal(false); }}
+                >
+                  <Text style={[styles.modalItemText, filterStatus === s.value && styles.modalItemTextActive]}>{s.label}</Text>
+                  {filterStatus === s.value && <Icon name="check" size={20} color={Colors.primary} />}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
+
+      <Modal visible={showSortModal} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setShowSortModal(false)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Sort By</Text>
+            <ScrollView style={styles.modalScroll}>
+              <TouchableOpacity 
+                style={styles.modalItem} 
+                onPress={() => { setSortBy('created_at'); setShowSortModal(false); }}
+              >
+                <Text style={[styles.modalItemText, sortBy === 'created_at' && styles.modalItemTextActive]}>Created Date</Text>
+                {sortBy === 'created_at' && <Icon name="check" size={20} color={Colors.primary} />}
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.modalItem} 
+                onPress={() => { setSortBy('due_date'); setShowSortModal(false); }}
+              >
+                <Text style={[styles.modalItemText, sortBy === 'due_date' && styles.modalItemTextActive]}>Due Date</Text>
+                {sortBy === 'due_date' && <Icon name="check" size={20} color={Colors.primary} />}
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
+      
+      <Modal visible={showCategoryFilterModal} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setShowCategoryFilterModal(false)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Filter by Category</Text>
+            <ScrollView style={styles.modalScroll}>
+              <TouchableOpacity 
+                style={styles.modalItem} 
+                onPress={() => { setFilterCategory(null); setShowCategoryFilterModal(false); }}
+              >
+                <Text style={[styles.modalItemText, filterCategory === null && styles.modalItemTextActive]}>All Categories</Text>
+                {filterCategory === null && <Icon name="check" size={20} color={Colors.primary} />}
+              </TouchableOpacity>
+              {categories.map(cat => (
+                <TouchableOpacity 
+                  key={cat.id} 
+                  style={styles.modalItem} 
+                  onPress={() => { setFilterCategory(cat.id); setShowCategoryFilterModal(false); }}
+                >
+                  <Text style={[styles.modalItemText, filterCategory === cat.id && styles.modalItemTextActive]}>{cat.name}</Text>
+                  {filterCategory === cat.id && <Icon name="check" size={20} color={Colors.primary} />}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
+
       <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('TaskDetail')} activeOpacity={0.8}>
         <Icon name="plus" size={32} color="#fff" />
       </TouchableOpacity>
@@ -174,25 +239,22 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: Colors.border,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 3, elevation: 1
   },
-  filters: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  filterGroup: { flexDirection: 'row', gap: Spacing.sm },
-  filterBtn: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md, backgroundColor: Colors.border, borderRadius: BorderRadius.sm },
-  activeBtn: { backgroundColor: Colors.primary },
-  filterBtnText: { ...Typography.labelBold, color: Colors.textMain },
-  activeBtnText: { color: '#fff' },
-  sortBtn: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.gutter },
-  sortBtnText: { ...Typography.labelBold, color: Colors.textMuted },
+  filters: { flexDirection: 'row', gap: Spacing.sm },
+  dropdownBtn: { flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: Colors.card, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.border },
+  dropdownText: { ...Typography.body, color: Colors.textMain, flex: 1, marginHorizontal: Spacing.xs },
   
-  categoryFilters: { marginTop: Spacing.md, paddingBottom: Spacing.xs },
-  catFilterBtn: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, backgroundColor: Colors.card, borderRadius: BorderRadius.full, marginRight: Spacing.sm, borderWidth: 1, borderColor: Colors.border },
-  catFilterBtnActive: { backgroundColor: Colors.primaryLight, borderColor: Colors.primary },
-  catFilterBtnText: { ...Typography.caption, color: Colors.textMuted, fontWeight: '600' },
-  catFilterBtnTextActive: { color: Colors.primary },
-  
-  statusContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingBottom: Spacing.sm },
+  subFiltersContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: Spacing.sm },
+  iconBtn: { padding: Spacing.sm, backgroundColor: Colors.card, borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.border, alignItems: 'center', justifyContent: 'center' },
   offlineText: { ...Typography.caption, color: Colors.error, fontWeight: '700' },
   refreshText: { ...Typography.caption, color: Colors.textMuted, fontWeight: '500' },
   
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: Colors.card, borderTopLeftRadius: BorderRadius.xl, borderTopRightRadius: BorderRadius.xl, padding: Spacing.lg, maxHeight: '60%' },
+  modalTitle: { ...Typography.sectionTitle, color: Colors.textMain, marginBottom: Spacing.lg, textAlign: 'center' },
+  modalScroll: { marginBottom: Spacing.lg },
+  modalItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: Spacing.md, borderBottomWidth: 1, borderBottomColor: '#F4F4F5' },
+  modalItemText: { ...Typography.body, color: Colors.textMain },
+  modalItemTextActive: { color: Colors.primary, fontWeight: '600' },
   list: { padding: Spacing.lg, paddingTop: Spacing.sm, paddingBottom: 100 },
   taskCard: { 
     backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: BorderRadius.lg, marginBottom: Spacing.md,
