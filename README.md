@@ -10,7 +10,7 @@ src/
 ├── components/      # Reusable UI components
 │   └── common/      # Shared components (Buttons, Inputs, Modals, etc.)
 ├── constants/       # Global constants (Colors, Typography, Strings)
-├── context/         # React Context providers (UI Context, etc.)
+├── providers/       # Global provider wrappers (UIProvider, etc.)
 ├── hooks/           # Custom React hooks
 ├── lib/             # Third-party library initializations (e.g., Supabase)
 ├── navigation/      # React Navigation setup and config

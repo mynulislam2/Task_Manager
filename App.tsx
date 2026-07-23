@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import { hideSplash } from 'react-native-splash-view';
 import { NavigationContainer } from '@react-navigation/native';
 import { store } from './src/store';
-import UIProvider from './src/context/UIProvider';
+import UIProvider from './src/providers/UIProvider';
 import { AppNavigator } from './src/navigation/AppNavigator';
 
 function App() {
