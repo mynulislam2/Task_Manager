@@ -81,9 +81,12 @@ export const TaskDetailScreen = () => {
             <TouchableOpacity onPress={() => toggleTaskStar(taskId)} style={styles.starBtn} activeOpacity={0.7}>
               <Icon 
                 name={task?.starred ? "star" : "star-outline"} 
-                size={24} 
-                color={task?.starred ? Colors.warning : '#D4D4D8'} 
+                size={20} 
+                color={task?.starred ? Colors.warning : Colors.textMuted} 
               />
+              <Text style={[styles.starBtnText, task?.starred && { color: Colors.warning }]}>
+                Priority
+              </Text>
             </TouchableOpacity>
           ) : undefined
         }
@@ -249,7 +252,8 @@ export const TaskDetailScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   scrollContent: { padding: Spacing.lg, paddingBottom: 60 },
-  starBtn: { padding: Spacing.sm, backgroundColor: Colors.card, borderRadius: BorderRadius.md, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
+  starBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 10 },
+  starBtnText: { ...Typography.body, fontWeight: '600', fontSize: 13, marginLeft: 4, color: Colors.textMuted },
   
   card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: BorderRadius.lg, marginBottom: Spacing.lg, borderWidth: 1, borderColor: Colors.border },
   label: { ...Typography.labelBold, color: Colors.textMuted, marginBottom: Spacing.sm, textTransform: 'uppercase' },

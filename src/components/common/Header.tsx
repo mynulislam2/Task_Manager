@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, rightElement, s
       <View style={styles.sideContainer}>
         {canGoBack && (
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Icon name="arrow-left" size={24} color={Colors.textMain} />
+            <Icon name="chevron-left" size={28} color={Colors.textMain} />
           </TouchableOpacity>
         )}
       </View>
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    ...Typography.h1,
+    ...Typography.h2,
     color: Colors.textMain,
     textAlign: 'center',
   },
