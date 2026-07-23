@@ -68,6 +68,10 @@ All tests use real reducer/function imports rather than shallow mocks, so they e
 
 ---
 
+## AI Assistance
+
+AI was used for test file generation, bug fixes, and UI implementation.
+
 ## What We Could Do (Out of Scope)
 
 These are not in the requirements, but each would be straightforward to add:
