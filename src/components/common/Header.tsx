@@ -50,6 +50,7 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
+    marginBottom: Spacing.sm,
   },
   sideContainer: {
     flex: 1,
