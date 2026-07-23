@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { RootState } from '../../store';
 import { supabase } from '../../lib/supabase';
 import { fetchCategoriesStart, fetchCategoriesSuccess, fetchCategoriesFailure, addCategory } from '../../store/categoriesSlice';
+import { Header } from '../../components/common/Header';
 import { Colors, Spacing, BorderRadius, Typography } from '../../constants';
 
 export const CategoriesScreen = () => {
@@ -53,10 +54,7 @@ export const CategoriesScreen = () => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Categories</Text>
-        <Text style={styles.headerSubtitle}>Manage your task spaces</Text>
-      </View>
+      <Header title="Categories" subtitle="Manage your task spaces" showBack={false} />
 
       <View style={styles.addCategoryContainer}>
         <TextInput
@@ -101,9 +99,6 @@ export const CategoriesScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   loader: { marginTop: 40 },
-  header: { padding: Spacing.lg, paddingTop: Spacing.sm, paddingBottom: Spacing.lg },
-  headerTitle: { ...Typography.h1, color: Colors.textMain, marginBottom: Spacing.xs },
-  headerSubtitle: { ...Typography.body, color: Colors.textMuted },
   
   addCategoryContainer: { flexDirection: 'row', paddingHorizontal: Spacing.lg, marginBottom: Spacing.md },
   input: { 

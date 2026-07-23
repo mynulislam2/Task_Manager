@@ -28,7 +28,7 @@ function TasksStack() {
       <Stack.Screen 
         name="TaskDetail" 
         component={TaskDetailScreen} 
-        options={{ title: 'Task Details', headerBackTitle: '' }} 
+        options={{ headerShown: false }} 
       />
     </Stack.Navigator>
   );

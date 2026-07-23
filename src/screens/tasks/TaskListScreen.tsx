@@ -9,6 +9,7 @@ import { useTasks } from '../../hooks/useTasks';
 import { debounce } from '../../utils/debounce';
 import { loadInitialCache } from '../../store/cacheMiddleware';
 import { LocalTask } from '../../types';
+import { Header } from '../../components/common/Header';
 import { Colors, Spacing, BorderRadius, Typography } from '../../constants';
 
 const TaskItem = memo(({ item, onPress }: { item: LocalTask; onPress: () => void }) => (
@@ -82,8 +83,9 @@ export const TaskListScreen = () => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       
+      <Header title="My Tasks" showBack={false} />
+      
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Tasks</Text>
         <TextInput
           style={styles.searchInput}
           placeholder="Search tasks..."
@@ -164,8 +166,7 @@ export const TaskListScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  header: { padding: Spacing.lg, paddingTop: Spacing.md, backgroundColor: Colors.background },
-  headerTitle: { ...Typography.h1, color: Colors.textMain, marginBottom: Spacing.md },
+  header: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md, backgroundColor: Colors.background },
   searchInput: { 
     ...Typography.body,
     backgroundColor: Colors.card, paddingHorizontal: Spacing.md, paddingVertical: Spacing.md, 

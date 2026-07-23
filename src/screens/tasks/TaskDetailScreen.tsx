@@ -6,6 +6,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTasks } from '../../hooks/useTasks';
 import { RootState } from '../../store';
+import { Header } from '../../components/common/Header';
 import { Colors, Spacing, BorderRadius, Typography } from '../../constants';
 
 export const TaskDetailScreen = () => {
@@ -71,10 +72,10 @@ export const TaskDetailScreen = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.headerRow}>
-          <Text style={styles.screenTitle}>{taskId ? 'Edit Task' : 'New Task'}</Text>
-          {taskId && (
+      <Header 
+        title={taskId ? 'Edit Task' : 'New Task'} 
+        rightElement={
+          taskId ? (
             <TouchableOpacity onPress={() => toggleTaskStar(taskId)} style={styles.starBtn} activeOpacity={0.7}>
               <Icon 
                 name={task?.starred ? "star" : "star-outline"} 
@@ -82,8 +83,10 @@ export const TaskDetailScreen = () => {
                 color={task?.starred ? Colors.warning : '#D4D4D8'} 
               />
             </TouchableOpacity>
-          )}
-        </View>
+          ) : undefined
+        }
+      />
+      <ScrollView contentContainerStyle={styles.scrollContent}>
 
         <View style={styles.card}>
           <Text style={styles.label}>Task Name</Text>
@@ -193,8 +196,6 @@ export const TaskDetailScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   scrollContent: { padding: Spacing.lg, paddingBottom: 60 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.lg, marginTop: Spacing.sm },
-  screenTitle: { ...Typography.h1, color: Colors.textMain },
   starBtn: { padding: Spacing.sm, backgroundColor: Colors.card, borderRadius: BorderRadius.md, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
   
   card: { backgroundColor: Colors.card, padding: Spacing.lg, borderRadius: BorderRadius.lg, marginBottom: Spacing.lg, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2 },
