@@ -33,6 +33,8 @@ export const TaskDetailScreen = () => {
       setTitle(task.title);
       setDescription(task.description || '');
       setStatus(task.status);
+      setDueDate(task.due_date ? new Date(task.due_date) : null);
+      setCategoryId(task.category_id);
     }
   }, [task]);
 
@@ -161,7 +163,7 @@ export const TaskDetailScreen = () => {
               <View style={styles.dateBtnInner}>
                 <Icon name="list-status" size={20} color={Colors.textMuted} style={{ marginRight: Spacing.sm }} />
                 <Text style={styles.dateBtnText}>
-                  {status === 'open' ? 'Open' : status === 'in_progress' ? 'In Progress' : status === 'in_review' ? 'In Review' : 'Completed'}
+                  {status === 'open' ? 'Open' : status === 'in_progress' ? 'In Progress' : status === 'in_review' ? 'In Review' : status === 'reopen' ? 'Reopen' : 'Completed'}
                 </Text>
               </View>
               <Icon name="chevron-down" size={20} color={Colors.textMuted} />
@@ -229,6 +231,7 @@ export const TaskDetailScreen = () => {
                 { label: 'Open', value: 'open' },
                 { label: 'In Progress', value: 'in_progress' },
                 { label: 'In Review', value: 'in_review' },
+                { label: 'Reopen', value: 'reopen' },
                 { label: 'Completed', value: 'done' }
               ].map(s => (
                 <TouchableOpacity 

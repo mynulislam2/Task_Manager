@@ -11,7 +11,7 @@ import { getCategoryStyle } from '../../utils/categoryUtils';
 
 export const CategoriesScreen = () => {
   const dispatch = useDispatch();
-  const { items, loading } = useSelector((state: RootState) => state.categories);
+  const { items, loading, error } = useSelector((state: RootState) => state.categories);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
@@ -70,6 +70,13 @@ export const CategoriesScreen = () => {
         </TouchableOpacity>
       </View>
 
+      {error && !loading && (
+        <View style={styles.errorBanner}>
+          <Icon name="alert-circle-outline" size={16} color={Colors.error} style={{ marginRight: Spacing.xs }} />
+          <Text style={styles.errorBannerText}>{error}</Text>
+        </View>
+      )}
+
       {loading && !items.length ? (
         <ActivityIndicator style={styles.loader} color={Colors.primary} size="large" />
       ) : (
@@ -103,6 +110,8 @@ export const CategoriesScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   loader: { marginTop: 40 },
+  errorBanner: { flexDirection: 'row', alignItems: 'center', marginHorizontal: Spacing.lg, marginBottom: Spacing.sm, padding: Spacing.sm, backgroundColor: '#FEE2E2', borderRadius: BorderRadius.sm },
+  errorBannerText: { ...Typography.caption, color: Colors.error, flex: 1 },
   
   addCategoryContainer: { flexDirection: 'row', paddingHorizontal: Spacing.lg, marginBottom: Spacing.md },
   input: { 

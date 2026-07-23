@@ -8,7 +8,7 @@ import { RootState } from '../../store';
 import { useTasks } from '../../hooks/useTasks';
 import { debounce } from '../../utils/debounce';
 import { loadInitialCache } from '../../store/cacheMiddleware';
-import { LocalTask } from '../../types';
+import { LocalTask, TaskStatus } from '../../types';
 import { Header } from '../../components/common/Header';
 import { Colors, Spacing, BorderRadius, Typography } from '../../constants';
 
@@ -45,6 +45,7 @@ export const TaskListScreen = () => {
   const {
     tasks,
     loading,
+    error,
     lastRefreshed,
     refreshTasks,
     setSearchQuery,
@@ -139,6 +140,13 @@ export const TaskListScreen = () => {
         </View>
       </View>
 
+      {error && !loading && (
+        <View style={styles.errorBanner}>
+          <Icon name="alert-circle-outline" size={16} color={Colors.error} style={{ marginRight: Spacing.xs }} />
+          <Text style={styles.errorBannerText}>{error}</Text>
+        </View>
+      )}
+
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id}
@@ -146,11 +154,19 @@ export const TaskListScreen = () => {
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={refreshTasks} tintColor={Colors.primary} />}
         ListEmptyComponent={!loading ? (
-          <View style={styles.emptyContainer}>
-            <Icon name="check-circle-outline" size={48} color={Colors.border} style={{ marginBottom: Spacing.sm }} />
-            <Text style={styles.emptyTitle}>All caught up!</Text>
-            <Text style={styles.emptySubtitle}>You have no tasks matching this criteria.</Text>
-          </View>
+          error ? (
+            <View style={styles.emptyContainer}>
+              <Icon name="cloud-off-outline" size={48} color={Colors.border} style={{ marginBottom: Spacing.sm }} />
+              <Text style={styles.emptyTitle}>Couldn't load tasks</Text>
+              <Text style={styles.emptySubtitle}>Check your connection and pull down to retry.</Text>
+            </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Icon name="check-circle-outline" size={48} color={Colors.border} style={{ marginBottom: Spacing.sm }} />
+              <Text style={styles.emptyTitle}>All caught up!</Text>
+              <Text style={styles.emptySubtitle}>You have no tasks matching this criteria.</Text>
+            </View>
+          )
         ) : null}
       />
       
@@ -166,16 +182,17 @@ export const TaskListScreen = () => {
                 <Text style={[styles.modalItemText, filterStatus === null && styles.modalItemTextActive]}>All Statuses</Text>
                 {filterStatus === null && <Icon name="check" size={20} color={Colors.primary} />}
               </TouchableOpacity>
-              {[
-                { label: 'Open', value: 'open' },
-                { label: 'In Progress', value: 'in_progress' },
-                { label: 'In Review', value: 'in_review' },
-                { label: 'Done', value: 'done' },
-              ].map(s => (
+              {([
+                { label: 'Open', value: 'open' as const },
+                { label: 'In Progress', value: 'in_progress' as const },
+                { label: 'In Review', value: 'in_review' as const },
+                { label: 'Reopen', value: 'reopen' as const },
+                { label: 'Done', value: 'done' as const },
+              ] as { label: string; value: TaskStatus }[]).map(s => (
                 <TouchableOpacity 
                   key={s.value} 
                   style={styles.modalItem} 
-                  onPress={() => { setFilterStatus(s.value as any); setShowStatusFilterModal(false); }}
+                  onPress={() => { setFilterStatus(s.value); setShowStatusFilterModal(false); }}
                 >
                   <Text style={[styles.modalItemText, filterStatus === s.value && styles.modalItemTextActive]}>{s.label}</Text>
                   {filterStatus === s.value && <Icon name="check" size={20} color={Colors.primary} />}
@@ -262,6 +279,8 @@ const styles = StyleSheet.create({
   iconBtn: { padding: Spacing.sm, backgroundColor: Colors.card, borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.border, alignItems: 'center', justifyContent: 'center' },
   offlineText: { ...Typography.caption, color: Colors.error, fontWeight: '700' },
   refreshText: { ...Typography.caption, color: Colors.textMuted, fontWeight: '500' },
+  errorBanner: { flexDirection: 'row', alignItems: 'center', marginHorizontal: Spacing.lg, marginBottom: Spacing.sm, padding: Spacing.sm, backgroundColor: '#FEE2E2', borderRadius: BorderRadius.sm },
+  errorBannerText: { ...Typography.caption, color: Colors.error, flex: 1 },
   
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: Colors.card, borderTopLeftRadius: BorderRadius.xl, borderTopRightRadius: BorderRadius.xl, padding: Spacing.lg, maxHeight: '60%' },

@@ -35,7 +35,51 @@ While `redux-persist` is an easy way to persist the Redux store to `AsyncStorage
 ### 3. How the Custom Cache Middleware Works
 We use a Redux Toolkit Listener (or a custom middleware) that intercepts successful actions (like fetching, adding, or editing tasks). When the task list updates, the middleware explicitly calls `AsyncStorage.setItem()` in the background. On app startup, the root component calls `AsyncStorage.getItem()` and dispatches an initialization action to populate the Redux store before triggering the background Supabase refresh.
 
+### 4. How the Local-Only `starred` Field Survives a Refresh
+
+Tasks fetched from the backend don't include the `starred` flag — it exists only on the device. The merge logic lives in `src/store/tasksSlice.ts` inside `fetchTasksSuccess`:
+
+```ts
+const currentStarredMap: Record<string, boolean> = {};
+state.items.forEach(t => {
+  if (t.starred) currentStarredMap[t.id] = true;
+});
+state.items = fetchedTasks.map(t => ({
+  ...t,
+  starred: currentStarredMap[t.id] || false,
+}));
+```
+
+Before overwriting the task list with backend data, we snapshot any `starred: true` entries into a map keyed by task ID. After the refresh data lands, we re-apply the flag. If a task was deleted on the backend, its `starred` value is naturally dropped (no matching ID in the fresh payload). This approach is O(n + m) — one pass over current items, one map lookup per fetched task.
+
 ---
+
+## Testing Approach
+
+Three test files cover different layers of the application:
+
+| Test file | What it tests | Why |
+|---|---|---|
+| `src/utils/__tests__/taskUtils.test.ts` | `filterAndSortTasks` — search by title, filter by category/status, sort by created_at and due_date | This is the core business logic for the Task List. It's pure (no mocks needed), cheap to run, and any regression here directly breaks the main screen. |
+| `src/utils/__tests__/categoryUtils.test.ts` | `getCategoryStyle` — keyword-to-icon mapping and hash-based color assignment | Demonstrates the mapper pattern. Validates that new category names get reasonable visual defaults without crashing, and that the return shape (`icon`, `colors.bg`, `colors.text`) matches what the component expects. |
+| `src/store/__tests__/tasksSlice.test.ts` | Redux reducer — `setInitialCache`, `addTask`, `updateTask`, `deleteTask`, `toggleStar` | Covers the cache merge logic and CRUD reducer actions. The `toggleStar` test also double-fires to verify toggle idempotency. |
+
+All tests use real reducer/function imports rather than shallow mocks, so they exercise actual TypeScript types and runtime paths.
+
+---
+
+## What We Could Do (Out of Scope)
+
+These are not in the requirements, but each would be straightforward to add:
+
+1. **Error recovery toast on write failures** — Replace `Alert.alert` with a dismissible inline toast.
+2. **Cursor-based pagination** — Wire `onEndReached` to cursor-based Supabase queries for task lists beyond 2,000 items.
+3. **Pull-to-refresh debounce** — Add a 2-second throttle to prevent redundant `refreshTasks` calls on rapid pulls.
+4. **Category rename/delete** — Extend the categories screen and add a confirmation modal for tasks referencing a deleted category.
+5. **Integration tests** — Wire the `useTasks` hook to a mock Supabase client and add component tests for `TaskItem` rendering.
+
+---
+
 
 ## Setup & Execution
 
@@ -70,7 +114,7 @@ CREATE TABLE tasks (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
   description TEXT,
-  status TEXT NOT NULL CHECK (status IN ('open', 'done')),
+  status TEXT NOT NULL CHECK (status IN ('open', 'in_progress', 'in_review', 'reopen', 'done')),
   due_date TIMESTAMP WITH TIME ZONE,
   category_id UUID REFERENCES categories(id),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
