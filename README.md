@@ -89,15 +89,25 @@ These are not in the requirements, but each would be straightforward to add:
 
 ### Prerequisites
 - Node.js >= 20
-- Supabase Project
+- npm
+- Supabase Project (free tier)
+- **Android**: JDK 17+, Android Studio with Android SDK
+- **iOS**: macOS, Xcode 15+, CocoaPods (`gem install cocoapods`)
 
 ### Installation
+
 ```bash
+# Install JS dependencies
 npm install
+
+# iOS only — install CocoaPods
+cd ios && pod install && cd ..
 ```
 
 ### Environment Config
-Create a `.env` file in the root:
+
+Create a `.env` file in the project root:
+
 ```env
 SUPABASE_URL=https://<project>.supabase.co
 SUPABASE_ANON_KEY=<your-anon-key>
@@ -105,8 +115,14 @@ SUPABASE_ANON_KEY=<your-anon-key>
 
 ### Backend Setup (Supabase)
 
-#### Schema
-Run the following in your Supabase SQL Editor:
+1. Go to your Supabase Dashboard > SQL Editor
+2. Run the migration file at `supabase/migrations/20260724_update_task_status.sql` — this creates the tables and seeds default categories
+3. Run the seed file at `supabase/seed.sql` to insert 8 sample tasks
+
+**Note:** The migration drops old FinTrack tables (`profiles`, `expenses`, etc.) if they exist. Skip this if you're using an existing database with those tables.
+
+#### Schema (for reference)
+
 ```sql
 CREATE TABLE categories (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -127,7 +143,7 @@ CREATE TABLE tasks (
 
 #### Seed Data
 
-A ready-to-run seed script is available at `supabase/seed.sql` — paste it into your Supabase SQL Editor:
+Run `supabase/seed.sql` in your Supabase SQL Editor, or paste:
 
 ```sql
 INSERT INTO public.categories (id, name) VALUES 
@@ -146,6 +162,10 @@ INSERT INTO public.tasks (title, description, status, due_date, category_id) VAL
 ('Schedule dentist appointment', 'Annual checkup', 'open', '2026-08-05T10:00:00Z', '22222222-2222-2222-2222-222222222222'),
 ('Drop off dry cleaning', 'Winter coats', 'done', '2026-07-20T10:00:00Z', '33333333-3333-3333-3333-333333333333');
 ```
+
+### Custom Fonts
+
+The app uses **Poppins** fonts bundled in `src/assets/fonts/` and linked via `react-native.config.js`.
 
 ## Available Scripts
 
