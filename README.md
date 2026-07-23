@@ -2,6 +2,25 @@
 
 A React Native task management application focused on robust offline caching, clean state management, and separation of concerns.
 
+## Project Structure
+
+```text
+src/
+├── assets/          # Fonts, icons, and image assets
+├── components/      # Reusable UI components
+│   └── common/      # Shared components (Buttons, Inputs, Modals, etc.)
+├── constants/       # Global constants (Colors, Typography, Strings)
+├── context/         # React Context providers (UI Context, etc.)
+├── hooks/           # Custom React hooks
+├── lib/             # Third-party library initializations (e.g., Supabase)
+├── navigation/      # React Navigation setup and config
+├── screens/         # App screens
+│   ├── categories/  # Category-related screens
+│   └── tasks/       # Task-related screens
+├── store/           # Redux store setup and slices
+├── types/           # TypeScript type definitions
+└── utils/           # Helper utilities and functions
+```
 ## Architectural Decisions & Rationale
 
 Here is a breakdown of the key architectural choices made for this project:
